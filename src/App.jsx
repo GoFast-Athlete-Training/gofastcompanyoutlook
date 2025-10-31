@@ -1,0 +1,90 @@
+import { BrowserRouter as Router, Route, Routes, NavLink } from 'react-router-dom'
+import CompanyAdminNav from './pages/CompanyAdminNav'
+import FinancialSpends from './pages/FinancialSpends'
+import FinancialProjections from './pages/FinancialProjections'
+import CompanyTasks from './pages/CompanyTasks'
+import ProductRoadmap from './pages/ProductRoadmap'
+import CompanyCrmList from './pages/CompanyCrmList'
+import CompanyCrmHub from './pages/CompanyCrmHub'
+import UserMetrics from './pages/UserMetrics'
+import { Button } from './components/ui/button'
+import { useEffect, useState } from 'react'
+import { Building2 } from 'lucide-react'
+
+function Layout({ children }) {
+  const [isDark, setIsDark] = useState(false)
+
+  useEffect(() => {
+    const root = document.documentElement
+    if (isDark) {
+      root.classList.add('dark')
+    } else {
+      root.classList.remove('dark')
+    }
+  }, [isDark])
+
+  return (
+    <div className="min-h-screen grid grid-cols-[240px_1fr]">
+      <aside className="border-r bg-white dark:bg-zinc-900 dark:text-zinc-100">
+        <div className="p-4 border-b">
+          <div className="flex items-center gap-2 font-semibold">
+            <Building2 className="h-5 w-5" />
+            <span>Company Outlook</span>
+          </div>
+        </div>
+        <nav className="p-2 space-y-1">
+          {[
+            { to: '/', label: 'Company Hub' },
+            { to: '/financial-spends', label: 'Financial Spending' },
+            { to: '/financial-projections', label: 'Financial Projections' },
+            { to: '/roadmap', label: 'Product Roadmap' },
+            { to: '/tasks', label: 'Company Tasks' },
+            { to: '/crm', label: 'Company CRM' },
+            { to: '/metrics', label: 'User Metrics' },
+          ].map((item) => (
+            <NavLink
+              key={item.to}
+              to={item.to}
+              end={item.to === '/'}
+              className={({ isActive }) =>
+                `block rounded-md px-3 py-2 text-sm ${isActive ? 'bg-zinc-900 text-white' : 'hover:bg-zinc-100'}`
+              }
+            >
+              {item.label}
+            </NavLink>
+          ))}
+        </nav>
+        <div className="p-4 mt-auto">
+          <Button variant="outline" className="w-full" onClick={() => setIsDark((v) => !v)}>
+            {isDark ? 'Light Mode' : 'Dark Mode'}
+          </Button>
+        </div>
+      </aside>
+      <main className="p-6 bg-zinc-50 dark:bg-zinc-950 dark:text-zinc-100">
+        <div className="max-w-6xl mx-auto">
+          {children}
+        </div>
+      </main>
+    </div>
+  )
+}
+
+export default function App() {
+  return (
+    <Router>
+      <Layout>
+        <Routes>
+          <Route path="/" element={<CompanyAdminNav />} />
+          <Route path="/financial-spends" element={<FinancialSpends />} />
+          <Route path="/financial-projections" element={<FinancialProjections />} />
+          <Route path="/tasks" element={<CompanyTasks />} />
+          <Route path="/roadmap" element={<ProductRoadmap />} />
+          <Route path="/crm" element={<CompanyCrmHub />} />
+          <Route path="/crm/list" element={<CompanyCrmList />} />
+          <Route path="/metrics" element={<UserMetrics />} />
+        </Routes>
+      </Layout>
+    </Router>
+  )
+}
+
