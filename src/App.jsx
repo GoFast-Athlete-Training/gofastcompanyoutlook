@@ -9,7 +9,6 @@ import CompanyCrmHub from './pages/CompanyCrmHub'
 import UserMetrics from './pages/UserMetrics'
 import { Button } from './components/ui/button'
 import { useEffect, useState } from 'react'
-import { Building2 } from 'lucide-react'
 
 function Layout({ children }) {
   const [isDark, setIsDark] = useState(false)
@@ -28,7 +27,7 @@ function Layout({ children }) {
       <aside className="border-r bg-white dark:bg-zinc-900 dark:text-zinc-100">
         <div className="p-4 border-b">
           <div className="flex items-center gap-2 font-semibold">
-            <Building2 className="h-5 w-5" />
+            <img src="/logo.jpg" alt="GoFast" className="w-8 h-8 rounded-full" />
             <span>Company Outlook</span>
           </div>
         </div>

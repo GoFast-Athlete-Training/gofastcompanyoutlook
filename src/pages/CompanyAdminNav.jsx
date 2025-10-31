@@ -2,12 +2,6 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../co
 import { Link } from 'react-router-dom'
 import { DollarSign, TrendingUp, CheckSquare, Map, Users, BarChart3 } from 'lucide-react'
 
-const stats = [
-  { label: 'Total Users', value: 1247 },
-  { label: 'Monthly Burn', value: '$45,000' },
-  { label: 'Runway', value: '8 months' },
-]
-
 const navOptions = [
   {
     title: 'Financial Spending',
@@ -59,19 +53,6 @@ export default function CompanyAdminNav() {
       <div>
         <h1 className="text-4xl font-bold mb-2">Company Outlook</h1>
         <p className="text-zinc-600">Manage company growth, financials, and operations</p>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {stats.map((s) => (
-          <Card key={s.label}>
-            <CardHeader>
-              <CardTitle className="text-base text-zinc-500">{s.label}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold">{s.value}</div>
-            </CardContent>
-          </Card>
-        ))}
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
