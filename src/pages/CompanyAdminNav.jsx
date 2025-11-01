@@ -1,6 +1,6 @@
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
 import { Link } from 'react-router-dom'
-import { DollarSign, TrendingUp, CheckSquare, Map, Users, BarChart3 } from 'lucide-react'
+import { Map, Target, ListTodo } from 'lucide-react'
 
 const stats = [
   { label: 'Total Users', value: 0 },
@@ -8,21 +8,7 @@ const stats = [
   { label: 'Runway', value: '--' },
 ]
 
-const navOptions = [
-  {
-    title: 'Financial Spending',
-    description: 'Track actual spending transactions (items)',
-    icon: <DollarSign className="h-8 w-8" />,
-    path: '/financial-spends',
-    color: 'bg-green-100 text-green-600'
-  },
-  {
-    title: 'Financial Projections',
-    description: 'Manage budgets and projections (totals)',
-    icon: <TrendingUp className="h-8 w-8" />,
-    path: '/financial-projections',
-    color: 'bg-blue-100 text-blue-600'
-  },
+const mainNavOptions = [
   {
     title: 'Product Roadmap',
     description: 'Company-wide product roadmap items',
@@ -31,25 +17,18 @@ const navOptions = [
     color: 'bg-purple-100 text-purple-600'
   },
   {
-    title: 'Company Tasks',
-    description: 'Manage tasks by department',
-    icon: <CheckSquare className="h-8 w-8" />,
+    title: 'Company Roadmap',
+    description: 'Strategic company initiatives and goals',
+    icon: <Target className="h-8 w-8" />,
+    path: '/company-roadmap',
+    color: 'bg-blue-100 text-blue-600'
+  },
+  {
+    title: 'Task Management',
+    description: 'Manage tasks by department and priority',
+    icon: <ListTodo className="h-8 w-8" />,
     path: '/tasks',
     color: 'bg-orange-100 text-orange-600'
-  },
-  {
-    title: 'Company CRM',
-    description: 'BD pipeline - clubs and partnerships',
-    icon: <Users className="h-8 w-8" />,
-    path: '/crm',
-    color: 'bg-pink-100 text-pink-600'
-  },
-  {
-    title: 'User Metrics',
-    description: 'Read-only user counts and analytics',
-    icon: <BarChart3 className="h-8 w-8" />,
-    path: '/metrics',
-    color: 'bg-indigo-100 text-indigo-600'
   },
 ]
 
@@ -58,7 +37,7 @@ export default function CompanyAdminNav() {
     <div className="space-y-6">
       <div>
         <h1 className="text-4xl font-bold mb-2">Company Outlook</h1>
-        <p className="text-zinc-600">Manage company growth, financials, and operations</p>
+        <p className="text-zinc-600">Manage company growth, strategy, and execution</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -75,7 +54,7 @@ export default function CompanyAdminNav() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {navOptions.map((option) => (
+        {mainNavOptions.map((option) => (
           <Link key={option.path} to={option.path}>
             <Card className="hover:shadow-lg transition cursor-pointer">
               <CardHeader>
@@ -83,11 +62,10 @@ export default function CompanyAdminNav() {
                   {option.icon}
                 </div>
                 <CardTitle>{option.title}</CardTitle>
-                <CardDescription>{option.description}</CardDescription>
+                <CardContent>
+                  <p className="text-zinc-600 text-sm">{option.description}</p>
+                </CardContent>
               </CardHeader>
-              <CardContent>
-                <p className="text-sm text-zinc-500">Click to view</p>
-              </CardContent>
             </Card>
           </Link>
         ))}

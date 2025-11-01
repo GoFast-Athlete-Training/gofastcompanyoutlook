@@ -4,6 +4,7 @@ import FinancialSpends from './pages/FinancialSpends'
 import FinancialProjections from './pages/FinancialProjections'
 import CompanyTasks from './pages/CompanyTasks'
 import ProductRoadmap from './pages/ProductRoadmap'
+import CompanyRoadmap from './pages/CompanyRoadmap'
 import CompanyCrmList from './pages/CompanyCrmList'
 import CompanyCrmHub from './pages/CompanyCrmHub'
 import UserMetrics from './pages/UserMetrics'
@@ -31,16 +32,38 @@ function Layout({ children }) {
             <span>Company Outlook</span>
           </div>
         </div>
-        <nav className="p-2 space-y-1">
-          {[
-            { to: '/', label: 'Company Hub' },
-            { to: '/financial-spends', label: 'Financial Spending' },
-            { to: '/financial-projections', label: 'Financial Projections' },
-            { to: '/roadmap', label: 'Product Roadmap' },
-            { to: '/tasks', label: 'Company Tasks' },
-            { to: '/crm', label: 'Company CRM' },
-            { to: '/metrics', label: 'User Metrics' },
-          ].map((item) => (
+        <nav className="p-2 space-y-4">
+          {/* Main Navigation */}
+          <div>
+            <p className="text-xs font-semibold text-zinc-500 uppercase tracking-wide px-3 py-2">Main</p>
+            {[
+              { to: '/', label: 'Company Hub' },
+              { to: '/roadmap', label: 'Product Roadmap' },
+              { to: '/company-roadmap', label: 'Company Roadmap' },
+              { to: '/tasks', label: 'Task Management' },
+            ].map((item) => (
+              <NavLink
+                key={item.to}
+                to={item.to}
+                end={item.to === '/'}
+                className={({ isActive }) =>
+                  `block rounded-md px-3 py-2 text-sm ${isActive ? 'bg-sky-500 text-white' : 'hover:bg-sky-50'}`
+                }
+              >
+                {item.label}
+              </NavLink>
+            ))}
+          </div>
+          
+          {/* Tools */}
+          <div>
+            <p className="text-xs font-semibold text-zinc-500 uppercase tracking-wide px-3 py-2">Tools</p>
+            {[
+              { to: '/financial-spends', label: 'Financial Spending' },
+              { to: '/financial-projections', label: 'Financial Projections' },
+              { to: '/crm', label: 'Company CRM' },
+              { to: '/metrics', label: 'User Metrics' },
+            ].map((item) => (
             <NavLink
               key={item.to}
               to={item.to}
@@ -78,6 +101,7 @@ export default function App() {
           <Route path="/financial-projections" element={<FinancialProjections />} />
           <Route path="/tasks" element={<CompanyTasks />} />
           <Route path="/roadmap" element={<ProductRoadmap />} />
+          <Route path="/company-roadmap" element={<CompanyRoadmap />} />
           <Route path="/crm" element={<CompanyCrmHub />} />
           <Route path="/crm/list" element={<CompanyCrmList />} />
           <Route path="/metrics" element={<UserMetrics />} />
