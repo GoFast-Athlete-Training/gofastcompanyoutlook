@@ -7,15 +7,31 @@ export default function GFSplash() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Check Firebase auth state immediately
+    // Check Firebase auth state AND localStorage for staff data
     const unsubscribe = onAuthStateChanged(auth, (user) => {
-      if (user) {
-        // Already authenticated → go to welcome (hydration hub)
-        console.log('✅ GFSplash: User authenticated → Welcome');
+      // Check if we have both Firebase user AND staff data in localStorage
+      const staffId = localStorage.getItem('gfcompany_staffId');
+      const staff = localStorage.getItem('gfcompany_staff');
+      
+      if (user && staffId && staff) {
+        // Has Firebase auth AND staff data → go to welcome (hydration hub)
+        console.log('✅ GFSplash: User authenticated with staff data → Welcome');
         navigate('/gfcompanywelcome');
       } else {
-        // Not authenticated → go to signin
-        console.log('❌ GFSplash: No user → Signin');
+        // No Firebase user OR no staff data → go to signin
+        console.log('❌ GFSplash: No user or no staff data → Signin');
+        console.log('   Firebase user:', !!user);
+        console.log('   Staff ID:', !!staffId);
+        console.log('   Staff data:', !!staff);
+        
+        // Clear any stale data
+        if (!user) {
+          localStorage.removeItem('gfcompany_staffId');
+          localStorage.removeItem('gfcompany_staff');
+          localStorage.removeItem('gfcompany_firebaseId');
+          localStorage.removeItem('gfcompany_firebaseToken');
+        }
+        
         navigate('/gfcompanysignin');
       }
     });
