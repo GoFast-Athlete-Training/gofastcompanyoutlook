@@ -7,8 +7,8 @@ const gfcompanyapi = axios.create({
     : 'http://localhost:3001',
   headers: {
     'Content-Type': 'application/json'
-  },
-  withCredentials: true
+  }
+  // No withCredentials - we use Bearer tokens, not cookies
 });
 
 // Request interceptor - AUTOMATICALLY adds Firebase token to all requests
