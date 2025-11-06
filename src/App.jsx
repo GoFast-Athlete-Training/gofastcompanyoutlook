@@ -178,6 +178,7 @@ export default function App() {
     <Router>
       <Routes>
         {/* GFCompany Auth Pages */}
+        <Route path="/splash" element={<GFSplash />} />
         <Route path="/gfsplash" element={<GFSplash />} />
         <Route path="/gfcompanysignin" element={<GFCompanySignin />} />
         <Route path="/gfcompanysignup" element={<GFCompanySignup />} />

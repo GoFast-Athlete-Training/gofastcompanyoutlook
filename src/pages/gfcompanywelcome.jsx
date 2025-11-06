@@ -6,9 +6,7 @@ import { getAuth } from 'firebase/auth';
 export default function GFCompanyWelcome() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
-  const [hydrated, setHydrated] = useState(false);
   const [staff, setStaff] = useState(null);
-  const [nextRoute, setNextRoute] = useState(null);
   const [error, setError] = useState(null);
 
   useEffect(() => {
