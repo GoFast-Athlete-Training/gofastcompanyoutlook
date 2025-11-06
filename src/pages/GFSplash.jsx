@@ -7,9 +7,22 @@ export default function GFSplash() {
   const navigate = useNavigate();
 
   useEffect(() => {
+    // Track mount time to enforce minimum splash duration (prevents jarring transitions)
+    const mountTime = Date.now();
+    const minSplashDuration = 1000; // 1 second minimum
+    
+    let navigationPromise = null;
+    
     // Check Firebase auth state AND localStorage for CompanyStaff-specific data
     // Important: Firebase user might exist from GoFast app, but we need CompanyStaff data
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      // Calculate how long we've been on splash screen
+      const elapsed = Date.now() - mountTime;
+      const remainingDelay = Math.max(0, minSplashDuration - elapsed);
+      
+      // Wait for minimum duration to pass
+      await new Promise(resolve => setTimeout(resolve, remainingDelay));
+      
       // Check if we have CompanyStaff-specific data in localStorage
       const staffId = localStorage.getItem('gfcompany_staffId');
       const staff = localStorage.getItem('gfcompany_staff');
@@ -57,7 +70,12 @@ export default function GFSplash() {
     });
 
     // Cleanup
-    return () => unsubscribe();
+    return () => {
+      unsubscribe();
+      if (navigationPromise) {
+        clearTimeout(navigationPromise);
+      }
+    };
   }, [navigate]);
 
   return (
