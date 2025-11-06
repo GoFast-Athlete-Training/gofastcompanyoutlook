@@ -32,12 +32,12 @@ const mainNavOptions = [
   },
 ]
 
-export default function CompanyAdminNav() {
+export default function GFCommandCentral() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-4xl font-bold mb-2">Company Outlook</h1>
-        <p className="text-zinc-600">Manage company growth, strategy, and execution</p>
+        <h1 className="text-4xl font-bold mb-2">GF Command Central</h1>
+        <p className="text-zinc-600">Manage GoFast growth, strategy, and execution</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

@@ -1,6 +1,9 @@
 import { BrowserRouter as Router, Route, Routes, NavLink, useNavigate } from 'react-router-dom'
-import CompanyAdminNav from './pages/CompanyAdminNav'
-import Splash from './pages/Splash'
+import GFSplash from './pages/GFSplash'
+import GFCommandCentral from './pages/GFCommandCentral'
+import GFCompanySignin from './pages/gfcompanysignin'
+import GFCompanySignup from './pages/gfcompanysignup'
+import GFCompanyWelcome from './pages/gfcompanywelcome'
 import FinancialSpends from './pages/FinancialSpends'
 import FinancialProjections from './pages/FinancialProjections'
 import CompanyTasks from './pages/CompanyTasks'
@@ -12,10 +15,11 @@ import UserMetrics from './pages/UserMetrics'
 import { Button } from './components/ui/button'
 import { useEffect, useState } from 'react'
 import { LogOut, User as UserIcon } from 'lucide-react'
+import { signOutUser } from './config/firebaseConfig'
 
 function Layout({ children }) {
   const [isDark, setIsDark] = useState(false)
-  const [authData, setAuthData] = useState(null)
+  const [ownerData, setOwnerData] = useState(null)
   const navigate = useNavigate()
 
   useEffect(() => {
@@ -28,58 +32,65 @@ function Layout({ children }) {
   }, [isDark])
 
   useEffect(() => {
-    const stored = localStorage.getItem('company_auth')
-    if (stored) {
-      setAuthData(JSON.parse(stored))
+    // Check for GFCompany staff data
+    const storedStaff = localStorage.getItem('gfcompany_staff')
+    const staffId = localStorage.getItem('gfcompany_staffId')
+    
+    if (storedStaff && staffId) {
+      setOwnerData(JSON.parse(storedStaff))  // Keep as ownerData for now (will update later)
     } else {
-      // No auth found, redirect to splash
-      navigate('/splash')
+      // No auth found, redirect to signin
+      navigate('/gfcompanysignin')
     }
   }, [navigate])
 
-  const handleLogout = () => {
-    localStorage.removeItem('company_auth')
-    localStorage.removeItem('company_invite_token')
-    setAuthData(null)
-    navigate('/splash')
+  const handleLogout = async () => {
+    try {
+      await signOutUser()
+    } catch (error) {
+      console.error('GFCompany: Logout error:', error)
+    }
+    
+    // Clear all GFCompany auth data
+    localStorage.removeItem('gfcompany_staff')
+    localStorage.removeItem('gfcompany_staffId')
+    localStorage.removeItem('gfcompany_firebaseId')
+    localStorage.removeItem('gfcompany_firebaseToken')
+    localStorage.removeItem('gfcompany_email')
+    localStorage.removeItem('gfcompany_companyHQId')
+    localStorage.removeItem('gfcompany_companyHQ')
+    localStorage.removeItem('gfcompany_companies')
+    localStorage.removeItem('gfcompany_role')
+    
+    setOwnerData(null)
+    navigate('/gfcompanysignin')
   }
 
-  // Get user role and department
-  const userRole = authData?.role || ''
-  const userDepartment = authData?.department || ''
-  const userEmail = authData?.email || ''
+  // Get staff info
+  const staffName = ownerData?.name || ''
+  const staffEmail = ownerData?.email || ''
+  const companyName = ownerData?.companyRoles?.[0]?.company?.name || 
+                      JSON.parse(localStorage.getItem('gfcompany_company') || '{}')?.name || 
+                      'GoFast Company'
+  const staffRole = localStorage.getItem('gfcompany_role') || 'founder'
 
-  // Define navigation items based on role
+  // Define navigation items (all owners have access for now)
   const getMainNavItems = () => {
-    const allItems = [
-      { to: '/', label: 'Company Hub', roles: ['founder', 'admin', 'manager', 'employee'] },
-      { to: '/roadmap', label: 'Product Roadmap', roles: ['founder', 'admin', 'manager'], departments: ['Product', 'Engineering'] },
-      { to: '/company-roadmap', label: 'Company Roadmap', roles: ['founder', 'admin', 'manager'] },
-      { to: '/tasks', label: 'Task Management', roles: ['founder', 'admin', 'manager', 'employee'] },
+    return [
+      { to: '/', label: 'GF Command Central' },
+      { to: '/roadmap', label: 'Product Roadmap' },
+      { to: '/company-roadmap', label: 'Company Roadmap' },
+      { to: '/tasks', label: 'Task Management' },
     ]
-
-    return allItems.filter(item => {
-      // Check role access
-      if (!item.roles.includes(userRole)) return false
-      // Check department access if specified
-      if (item.departments && !item.departments.includes(userDepartment)) return false
-      return true
-    })
   }
 
   const getToolsNavItems = () => {
-    const allItems = [
-      { to: '/financial-spends', label: 'Financial Spending', roles: ['founder', 'admin', 'manager'], departments: ['Finance', 'Executive'] },
-      { to: '/financial-projections', label: 'Financial Projections', roles: ['founder', 'admin'], departments: ['Finance', 'Executive'] },
-      { to: '/crm', label: 'Company CRM', roles: ['founder', 'admin', 'manager'], departments: ['Sales', 'GTM', 'Marketing', 'Executive'] },
-      { to: '/metrics', label: 'User Metrics', roles: ['founder', 'admin', 'manager'] },
+    return [
+      { to: '/financial-spends', label: 'Financial Spending' },
+      { to: '/financial-projections', label: 'Financial Projections' },
+      { to: '/crm', label: 'Company CRM' },
+      { to: '/metrics', label: 'User Metrics' },
     ]
-
-    return allItems.filter(item => {
-      if (!item.roles.includes(userRole)) return false
-      if (item.departments && !item.departments.includes(userDepartment)) return false
-      return true
-    })
   }
 
   return (
@@ -88,15 +99,15 @@ function Layout({ children }) {
         <div className="p-4 border-b">
           <div className="flex items-center gap-2 font-semibold mb-2">
             <img src="/logo.jpg" alt="GoFast" className="w-8 h-8 rounded-full" />
-            <span>Company Outlook</span>
+            <span>GF Company</span>
           </div>
-          {authData && (
+          {ownerData && (
             <div className="text-xs text-zinc-600 dark:text-zinc-400 space-y-1">
               <div className="flex items-center gap-1">
                 <UserIcon className="h-3 w-3" />
-                <span className="truncate">{userEmail}</span>
+                <span className="truncate">{staffEmail}</span>
               </div>
-              <div className="capitalize">{userRole} • {userDepartment}</div>
+              <div className="truncate capitalize">{staffRole} • {companyName}</div>
             </div>
           )}
         </div>
@@ -141,7 +152,7 @@ function Layout({ children }) {
           <Button variant="outline" className="w-full" onClick={() => setIsDark((v) => !v)}>
             {isDark ? 'Light Mode' : 'Dark Mode'}
           </Button>
-          {authData && (
+          {ownerData && (
             <Button 
               variant="outline" 
               className="w-full text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20" 
@@ -166,13 +177,19 @@ export default function App() {
   return (
     <Router>
       <Routes>
-        <Route path="/splash" element={<Splash />} />
+        {/* GFCompany Auth Pages */}
+        <Route path="/gfsplash" element={<GFSplash />} />
+        <Route path="/gfcompanysignin" element={<GFCompanySignin />} />
+        <Route path="/gfcompanysignup" element={<GFCompanySignup />} />
+        <Route path="/gfcompanywelcome" element={<GFCompanyWelcome />} />
+        
+        {/* Protected Routes with Layout */}
         <Route
           path="/*"
           element={
             <Layout>
               <Routes>
-                <Route path="/" element={<CompanyAdminNav />} />
+                <Route path="/" element={<GFCommandCentral />} />
                 <Route path="/financial-spends" element={<FinancialSpends />} />
                 <Route path="/financial-projections" element={<FinancialProjections />} />
                 <Route path="/tasks" element={<CompanyTasks />} />
@@ -185,6 +202,9 @@ export default function App() {
             </Layout>
           }
         />
+        
+        {/* Redirect root to splash (checks auth state) */}
+        <Route path="/" element={<GFSplash />} />
       </Routes>
     </Router>
   )
