@@ -18,8 +18,8 @@ export default function GFSplash() {
         console.log('✅ GFSplash: User authenticated with staff data → Welcome');
         navigate('/gfcompanywelcome');
       } else {
-        // No Firebase user OR no staff data → go to signin
-        console.log('❌ GFSplash: No user or no staff data → Signin');
+        // No Firebase user OR no staff data → go to signup (so they can create account)
+        console.log('❌ GFSplash: No user or no staff data → Signup');
         console.log('   Firebase user:', !!user);
         console.log('   Staff ID:', !!staffId);
         console.log('   Staff data:', !!staff);
@@ -32,7 +32,7 @@ export default function GFSplash() {
           localStorage.removeItem('gfcompany_firebaseToken');
         }
         
-        navigate('/gfcompanysignin');
+        navigate('/gfcompanysignup');
       }
     });
 
