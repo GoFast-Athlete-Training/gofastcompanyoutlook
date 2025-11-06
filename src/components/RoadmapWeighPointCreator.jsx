@@ -1,10 +1,10 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Button } from './ui/button'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from './ui/card'
 import { X } from 'lucide-react'
 
-export default function RoadmapWeighPointCreator({ isOpen, onClose, onSubmit }) {
-  const [formData, setFormData] = useState({
+export default function RoadmapWeighPointCreator({ isOpen, onClose, onSubmit, editingItem }) {
+  const defaultFormData = {
     itemType: 'Feature', // Feature or Milestone
     featureName: '',
     parentArchitecture: '',
@@ -20,7 +20,18 @@ export default function RoadmapWeighPointCreator({ isOpen, onClose, onSubmit }) 
     priority: 'P1',
     targetDate: '',
     status: 'Not Started'
-  })
+  }
+
+  const [formData, setFormData] = useState(defaultFormData)
+
+  // Populate form when editing
+  useEffect(() => {
+    if (editingItem) {
+      setFormData(editingItem)
+    } else {
+      setFormData(defaultFormData)
+    }
+  }, [editingItem, isOpen])
 
   const handleChange = (e) => {
     const { name, value } = e.target
@@ -33,22 +44,7 @@ export default function RoadmapWeighPointCreator({ isOpen, onClose, onSubmit }) 
   const handleSubmit = (e) => {
     e.preventDefault()
     onSubmit(formData)
-    setFormData({
-      itemType: 'Feature',
-      featureName: '',
-      parentArchitecture: '',
-      featureType: 'Product',
-      whatItDoes: '',
-      howItHelps: '',
-      fieldsData: '',
-      howToGet: '',
-      prerequisites: '',
-      visual: 'List',
-      hoursEst: '',
-      priority: 'P1',
-      targetDate: '',
-      status: 'Not Started'
-    })
+    setFormData(defaultFormData)
     onClose()
   }
 
@@ -59,8 +55,10 @@ export default function RoadmapWeighPointCreator({ isOpen, onClose, onSubmit }) 
       <Card className="max-w-2xl w-full max-h-[90vh] overflow-y-auto mx-4">
         <CardHeader className="flex flex-row items-center justify-between">
           <div>
-            <CardTitle>Add Roadmap Item</CardTitle>
-            <CardDescription>Create a new roadmap item or milestone</CardDescription>
+            <CardTitle>{editingItem ? 'Edit Roadmap Item' : 'Add Roadmap Item'}</CardTitle>
+            <CardDescription>
+              {editingItem ? 'Update the roadmap item details' : 'Create a new roadmap item or milestone'}
+            </CardDescription>
           </div>
           <Button variant="ghost" size="sm" onClick={onClose}>
             <X className="h-4 w-4" />
@@ -266,7 +264,9 @@ export default function RoadmapWeighPointCreator({ isOpen, onClose, onSubmit }) 
             </div>
 
             <div className="flex gap-2 pt-4">
-              <Button type="submit" className="flex-1">Add Roadmap Item</Button>
+              <Button type="submit" className="flex-1">
+                {editingItem ? 'Update Roadmap Item' : 'Add Roadmap Item'}
+              </Button>
               <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
             </div>
           </form>
