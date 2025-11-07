@@ -29,7 +29,7 @@ export default function GFCompanySignin() {
         firstName: result.name?.split(' ')[0] || '',
         lastName: result.name?.split(' ').slice(1).join(' ') || '',
         photoURL: result.photoURL,
-        role: 'founder' // Assign founder role on initial sign in
+        role: 'Founder' // Assign Founder role on initial sign in (validated against roleConfig.js)
       });
       
       const { staff } = res.data;
@@ -74,7 +74,7 @@ export default function GFCompanySignin() {
         firstName: result.name?.split(' ')[0] || '',
         lastName: result.name?.split(' ').slice(1).join(' ') || '',
         photoURL: result.photoURL,
-        role: 'founder' // Assign founder role on initial sign in
+        role: 'Founder' // Assign Founder role on initial sign in (validated against roleConfig.js)
       });
       
       const { staff } = res.data;
