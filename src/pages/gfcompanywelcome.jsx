@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import gfcompanyapi from '../lib/gfcompanyapi';
-import { getAuth } from 'firebase/auth';
+import { getAuth, onAuthStateChanged } from 'firebase/auth';
 
 export default function GFCompanyWelcome() {
   const navigate = useNavigate();
@@ -10,104 +10,90 @@ export default function GFCompanyWelcome() {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    const hydrateStaff = async () => {
-      
-      try {
-        // Get Firebase user to ensure we have auth
-        const auth = getAuth();
-        const firebaseUser = auth.currentUser;
-        
-        if (!firebaseUser) {
-          console.log('❌ GFCompany: No Firebase user found → redirecting to signup');
-          navigate('/gfcompanysignup');
-          return;
-        }
+    let isMounted = true;
+    const auth = getAuth();
 
+    const hydrateStaff = async () => {
+      try {
         console.log('🚀 GFCompany WELCOME: Hydrating Staff data...');
-        
-        // Call hydration endpoint (token automatically added by api interceptor)
+
         const response = await gfcompanyapi.get('/api/staff/hydrate');
-        
+
         if (!response.data.success) {
           console.error('❌ GFCompany: Hydration failed:', response.data.error);
-          setError('Failed to load your account. Please try again.');
-          setLoading(false);
+          if (isMounted) {
+            setError('Failed to load your account. Please try again.');
+            setLoading(false);
+          }
           return;
         }
 
         const { staff: staffData } = response.data;
         console.log('✅ GFCompany WELCOME: Staff hydrated:', staffData);
 
-        // Cache Staff data to localStorage
         localStorage.setItem('gfcompany_staffId', staffData.id);
         localStorage.setItem('gfcompany_staff', JSON.stringify(staffData));
-        
-        // Extract company from companyRoles (single company - GoFastCompany)
-        if (staffData.companyRoles && staffData.companyRoles.length > 0) {
-          const companyRole = staffData.companyRoles[0];
+
+        if (staffData.company) {
           const company = {
-            ...companyRole.company,
-            role: companyRole.role,  // Include role from junction
-            department: companyRole.department
+            ...staffData.company,
+            role: staffData.role,
+            department: staffData.department,
           };
-          
+
           localStorage.setItem('gfcompany_company', JSON.stringify(company));
           localStorage.setItem('gfcompany_companyId', company.id);
           localStorage.setItem('gfcompany_containerId', company.containerId);
-          localStorage.setItem('gfcompany_role', company.role);
+          localStorage.setItem('gfcompany_role', staffData.role);
+          localStorage.setItem('gfcompany_department', staffData.department || '');
         }
+
+        if (!isMounted) return;
 
         setStaff(staffData);
+        setLoading(false);
 
-        // Determine next route and navigate automatically
-        // Check if GoFastCompany exists (no companyRoles = no company setup yet)
-        if (!staffData.companyRoles || staffData.companyRoles.length === 0) {
-          console.log('⚠️ GFCompany: No GoFastCompany found → navigating to company setup');
-          // Auto-navigate to company create (we'll create a simple page or just go to command central)
-          navigate('/');
-          return;
+        if (window.location.pathname !== '/') {
+          navigate('/', { replace: true });
         }
-
-        // Check if staff has a name (basic profile requirement)
-        if (!staffData.name || staffData.name.trim() === '') {
-          console.log('⚠️ GFCompany: Missing name → navigating to profile setup');
-          // For now, just go to command central - profile can be updated later
-          navigate('/');
-          return;
-        }
-
-        // All complete - ready for company screen
-        console.log('✅ GFCompany: Staff fully hydrated - navigating to command central');
-        navigate('/');
-        
       } catch (error) {
         console.error('❌ GFCompany WELCOME: Hydration error:', error);
-        
-        // If 401, user not authenticated
+
+        if (!isMounted) return;
+
+        setLoading(false);
+
         if (error.response?.status === 401) {
-          console.log('🚫 GFCompany: Unauthorized → redirecting to signup');
-          navigate('/gfcompanysignup');
+          console.log('🚫 GFCompany: Unauthorized → redirecting to signin');
+          navigate('/gfcompanysignin', { replace: true });
           return;
         }
-        
-        // If user not found, redirect to signup
+
         if (error.response?.status === 404) {
           console.log('👤 GFCompany: User not found → redirecting to signup');
-          navigate('/gfcompanysignup');
+          navigate('/gfcompanysignup', { replace: true });
           return;
         }
-        
+
         setError('Failed to load your account. Please try again.');
-        setLoading(false);
       }
     };
 
-    // Add a small delay to prevent jarring transitions
-    const timer = setTimeout(() => {
-      hydrateStaff();
-    }, 500); // 500ms delay
+    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+      if (!firebaseUser) {
+        console.log('❌ GFCompany: No Firebase user found → redirecting to signin');
+        navigate('/gfcompanysignin', { replace: true });
+        setLoading(false);
+        return;
+      }
 
-    return () => clearTimeout(timer);
+      hydrateStaff();
+    });
+
+    return () => {
+      isMounted = false;
+      unsubscribe();
+    };
   }, [navigate]);
 
   // Show loading state while hydrating

@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Route, Routes, NavLink, useNavigate } from 'react-router-dom'
+import { BrowserRouter as Router, Route, Routes, NavLink, useNavigate, Outlet } from 'react-router-dom'
 import GFSplash from './pages/GFSplash'
 import GFCommandCentral from './pages/GFCommandCentral'
 import GFCompanySignin from './pages/gfcompanysignin'
@@ -17,7 +17,7 @@ import { useEffect, useState } from 'react'
 import { LogOut, User as UserIcon } from 'lucide-react'
 import { signOutUser } from './config/firebaseConfig'
 
-function Layout({ children }) {
+function Layout() {
   const [isDark, setIsDark] = useState(false)
   const [ownerData, setOwnerData] = useState(null)
   const navigate = useNavigate()
@@ -32,15 +32,20 @@ function Layout({ children }) {
   }, [isDark])
 
   useEffect(() => {
-    // Check for GFCompany staff data
     const storedStaff = localStorage.getItem('gfcompany_staff')
     const staffId = localStorage.getItem('gfcompany_staffId')
-    
+
     if (storedStaff && staffId) {
-      setOwnerData(JSON.parse(storedStaff))  // Keep as ownerData for now (will update later)
+      try {
+        setOwnerData(JSON.parse(storedStaff))
+      } catch (error) {
+        console.error('GFCompany: Failed to parse stored staff data:', error)
+        localStorage.removeItem('gfcompany_staff')
+        localStorage.removeItem('gfcompany_staffId')
+        navigate('/gfcompanywelcome', { replace: true })
+      }
     } else {
-      // No auth found, redirect to signin
-      navigate('/gfcompanysignin')
+      navigate('/gfcompanywelcome', { replace: true })
     }
   }, [navigate])
 
@@ -69,10 +74,10 @@ function Layout({ children }) {
   // Get staff info
   const staffName = ownerData?.name || ''
   const staffEmail = ownerData?.email || ''
-  const companyName = ownerData?.companyRoles?.[0]?.company?.name || 
-                      JSON.parse(localStorage.getItem('gfcompany_company') || '{}')?.name || 
+  const companyName = ownerData?.company?.companyName || 
+                      JSON.parse(localStorage.getItem('gfcompany_company') || '{}')?.companyName || 
                       'GoFast Company'
-  const staffRole = localStorage.getItem('gfcompany_role') || 'founder'
+  const staffRole = ownerData?.role || localStorage.getItem('gfcompany_role') || 'founder'
 
   // Define navigation items (all owners have access for now)
   const getMainNavItems = () => {
@@ -166,7 +171,7 @@ function Layout({ children }) {
       </aside>
       <main className="p-6 bg-zinc-50 dark:bg-zinc-950 dark:text-zinc-100">
         <div className="max-w-6xl mx-auto">
-          {children}
+          <Outlet />
         </div>
       </main>
     </div>
@@ -174,6 +179,22 @@ function Layout({ children }) {
 }
 
 export default function App() {
+  const NotFound = () => (
+    <div className="min-h-screen flex flex-col items-center justify-center bg-zinc-50 dark:bg-zinc-950 dark:text-zinc-100">
+      <img src="/logo.jpg" alt="GoFast Company" className="h-16 w-16 rounded-full mb-6" />
+      <h1 className="text-3xl font-bold mb-2">Page not found</h1>
+      <p className="text-zinc-600 dark:text-zinc-400 mb-6">
+        This route isn’t set up yet. Double-check the URL or wire up the page.
+      </p>
+      <NavLink
+        to="/"
+        className="px-4 py-2 rounded-md bg-sky-500 text-white hover:bg-sky-600 transition"
+      >
+        Go to Command Central
+      </NavLink>
+    </div>
+  )
+
   return (
     <Router>
       <Routes>
@@ -185,27 +206,20 @@ export default function App() {
         <Route path="/gfcompanywelcome" element={<GFCompanyWelcome />} />
         
         {/* Protected Routes with Layout */}
-        <Route
-          path="/*"
-          element={
-            <Layout>
-              <Routes>
-                <Route path="/" element={<GFCommandCentral />} />
-                <Route path="/financial-spends" element={<FinancialSpends />} />
-                <Route path="/financial-projections" element={<FinancialProjections />} />
-                <Route path="/tasks" element={<CompanyTasks />} />
-                <Route path="/roadmap" element={<ProductRoadmap />} />
-                <Route path="/company-roadmap" element={<CompanyRoadmap />} />
-                <Route path="/crm" element={<CompanyCrmHub />} />
-                <Route path="/crm/list" element={<CompanyCrmList />} />
-                <Route path="/metrics" element={<UserMetrics />} />
-              </Routes>
-            </Layout>
-          }
-        />
-        
-        {/* Redirect root to splash (checks auth state) */}
-        <Route path="/" element={<GFSplash />} />
+        <Route path="/" element={<Layout />}>
+          <Route index element={<GFCommandCentral />} />
+          <Route path="financial-spends" element={<FinancialSpends />} />
+          <Route path="financial-projections" element={<FinancialProjections />} />
+          <Route path="tasks" element={<CompanyTasks />} />
+          <Route path="roadmap" element={<ProductRoadmap />} />
+          <Route path="company-roadmap" element={<CompanyRoadmap />} />
+          <Route path="crm" element={<CompanyCrmHub />} />
+          <Route path="crm/list" element={<CompanyCrmList />} />
+          <Route path="metrics" element={<UserMetrics />} />
+        </Route>
+
+        {/* Fallback */}
+        <Route path="*" element={<NotFound />} />
       </Routes>
     </Router>
   )
