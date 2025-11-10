@@ -85,97 +85,45 @@ export default function GFCommandCentral() {
 
   const seedProductRoadmap = async () => {
     setSeeding(true);
-    const items = [
-      {
-        title: 'Join RunCrew',
-        itemType: 'Feature',
-        parentArchitecture: 'RunCrew',
-        roadmapType: 'Product',
-        category: 'Core Feature',
-        whatItDoes: 'Allow users to join RunCrews and participate in group runs',
-        howItHelps: 'Enables community building and group run coordination',
-        priority: 'P1',
-        status: 'In Progress',
-        hoursEstimated: 40
-      },
-      {
-        title: 'Messaging',
-        itemType: 'Feature',
-        parentArchitecture: 'Communication',
-        roadmapType: 'Product',
-        category: 'Core Feature',
-        whatItDoes: 'Direct messaging between users and RunCrew members',
-        howItHelps: 'Enables communication and coordination for runs and events',
-        priority: 'P1',
-        status: 'Not Started',
-        hoursEstimated: 60
-      },
-      {
-        title: 'Dynamic Leaderboard',
-        itemType: 'Feature',
-        parentArchitecture: 'Competition',
-        roadmapType: 'Product',
-        category: 'Engagement',
-        whatItDoes: 'Real-time leaderboard showing top performers in RunCrews and challenges',
-        howItHelps: 'Increases engagement and competition among runners',
-        priority: 'P2',
-        status: 'Not Started',
-        hoursEstimated: 50
-      },
-      {
-        title: 'Sales Partnership',
-        itemType: 'Feature',
-        parentArchitecture: 'Business',
-        roadmapType: 'Product',
-        category: 'Revenue',
-        whatItDoes: 'Partnership management and sales tracking system',
-        howItHelps: 'Enables tracking of partnerships and revenue opportunities',
-        priority: 'P2',
-        status: 'Not Started',
-        hoursEstimated: 80
-      },
-      {
-        title: 'Ambassador Program',
-        itemType: 'Feature',
-        parentArchitecture: 'Community',
-        roadmapType: 'Product',
-        category: 'Growth',
-        whatItDoes: 'Ambassador program management and tracking',
-        howItHelps: 'Enables community growth through ambassador network',
-        priority: 'P2',
-        status: 'Not Started',
-        hoursEstimated: 70
-      }
-    ];
-
-    console.log('🌱 Seeding product roadmap items...');
-    let created = 0;
-    let errors = 0;
-
-    for (const item of items) {
-      try {
-        const response = await gfcompanyapi.post('/api/company/roadmap', item);
-        if (response.data.success) {
-          console.log(`✅ Created: ${item.title}`);
-          created++;
-        } else {
-          console.error(`❌ Failed: ${item.title}`, response.data.error);
-          errors++;
-        }
-      } catch (error) {
-        console.error(`❌ Error: ${item.title}`, error.response?.data || error.message);
-        errors++;
-      }
-    }
-
-    console.log(`\n✅ Done! Created: ${created}, Errors: ${errors}`);
-    setSeeding(false);
     
-    if (created > 0) {
-      // Reload the page to see the new items
-      window.location.reload();
-    } else {
-      alert(`❌ Failed to seed roadmap items. Check console for errors.`);
+    // Just seed the first item to test upsert
+    const item = {
+      title: 'Join RunCrew',
+      itemType: 'Feature',
+      parentArchitecture: 'RunCrew',
+      roadmapType: 'Product',
+      category: 'Core Feature',
+      whatItDoes: 'Allow users to join RunCrews and participate in group runs',
+      howItHelps: 'Enables community building and group run coordination',
+      fieldsData: 'RunCrew ID, User ID, Join Date, Role',
+      howToGet: 'GET /api/runcrew/:id, POST /api/runcrew/:id/join',
+      prerequisites: 'User must be authenticated, RunCrew must exist',
+      visual: 'List',
+      priority: 'P1',
+      status: 'In Progress',
+      hoursEstimated: 40,
+      targetDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString() // 30 days from now
+    };
+
+    console.log('🌱 Seeding product roadmap item:', item.title);
+    console.log('📋 Fields:', item);
+
+    try {
+      const response = await gfcompanyapi.post('/api/company/roadmap', item);
+      if (response.data.success) {
+        console.log(`✅ Created: ${item.title}`, response.data.roadmapItem);
+        alert(`✅ Created roadmap item: ${item.title}\n\nRefresh to see it, then test upsert!`);
+        setSeeding(false);
+        window.location.reload();
+      } else {
+        console.error(`❌ Failed:`, response.data.error);
+        alert(`❌ Failed to create: ${response.data.error}`);
+        setSeeding(false);
+      }
+    } catch (error) {
+      console.error(`❌ Error:`, error.response?.data || error.message);
+      alert(`❌ Error: ${error.response?.data?.message || error.message}`);
+      setSeeding(false);
     }
   };
   
