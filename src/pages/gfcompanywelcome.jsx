@@ -33,26 +33,31 @@ export default function GFCompanyWelcome() {
 
         localStorage.setItem('gfcompany_staffId', staffData.id);
         localStorage.setItem('gfcompany_staff', JSON.stringify(staffData));
-
-        if (staffData.company) {
-          const company = {
-            ...staffData.company,
-            role: staffData.role,
-            department: staffData.department,
-          };
-
-          localStorage.setItem('gfcompany_company', JSON.stringify(company));
-          localStorage.setItem('gfcompany_companyId', company.id);
-          localStorage.setItem('gfcompany_containerId', company.containerId);
-          localStorage.setItem('gfcompany_role', staffData.role);
-          localStorage.setItem('gfcompany_department', staffData.department || '');
-        }
+        localStorage.setItem('gfcompany_role', staffData.role);
 
         if (!isMounted) return;
 
         setStaff(staffData);
         setLoading(false);
 
+        // Check if company exists
+        if (!staffData.company) {
+          console.log('⚠️ GFCompany: No company found → redirecting to company settings');
+          navigate('/company-settings', { replace: true });
+          return;
+        }
+
+        // Company exists - save to localStorage
+        const company = {
+          ...staffData.company,
+          role: staffData.role,
+        };
+
+        localStorage.setItem('gfcompany_company', JSON.stringify(company));
+        localStorage.setItem('gfcompany_companyId', company.id);
+        localStorage.setItem('gfcompany_containerId', company.containerId);
+
+        // Navigate to command central
         if (window.location.pathname !== '/') {
           navigate('/', { replace: true });
         }

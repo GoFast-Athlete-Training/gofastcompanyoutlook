@@ -1,6 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
 import { Link } from 'react-router-dom'
-import { Map, Target, ListTodo } from 'lucide-react'
+import { Map, Target, ListTodo, Building2 } from 'lucide-react'
 
 const stats = [
   { label: 'Total Users', value: 0 },
@@ -29,6 +29,16 @@ const mainNavOptions = [
     icon: <ListTodo className="h-8 w-8" />,
     path: '/tasks',
     color: 'bg-orange-100 text-orange-600'
+  },
+]
+
+const settingsOptions = [
+  {
+    title: 'Company Settings',
+    description: 'Manage company details and configuration',
+    icon: <Building2 className="h-8 w-8" />,
+    path: '/company-settings',
+    color: 'bg-sky-100 text-sky-600'
   },
 ]
 
@@ -69,6 +79,28 @@ export default function GFCommandCentral() {
             </Card>
           </Link>
         ))}
+      </div>
+
+      {/* Settings Section */}
+      <div className="mt-8">
+        <h2 className="text-2xl font-bold mb-4">Settings</h2>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {settingsOptions.map((option) => (
+            <Link key={option.path} to={option.path}>
+              <Card className="hover:shadow-lg transition cursor-pointer">
+                <CardHeader>
+                  <div className={`w-16 h-16 rounded-lg flex items-center justify-center ${option.color} mb-4`}>
+                    {option.icon}
+                  </div>
+                  <CardTitle>{option.title}</CardTitle>
+                  <CardContent>
+                    <p className="text-zinc-600 text-sm">{option.description}</p>
+                  </CardContent>
+                </CardHeader>
+              </Card>
+            </Link>
+          ))}
+        </div>
       </div>
     </div>
   )

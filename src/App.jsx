@@ -12,9 +12,10 @@ import CompanyRoadmap from './pages/CompanyRoadmap'
 import CompanyCrmList from './pages/CompanyCrmList'
 import CompanyCrmHub from './pages/CompanyCrmHub'
 import UserMetrics from './pages/UserMetrics'
+import CompanySettings from './pages/CompanySettings'
 import { Button } from './components/ui/button'
 import { useEffect, useState } from 'react'
-import { LogOut, User as UserIcon } from 'lucide-react'
+import { LogOut, User as UserIcon, Settings } from 'lucide-react'
 import { signOutUser } from './config/firebaseConfig'
 
 function Layout() {
@@ -98,6 +99,12 @@ function Layout() {
     ]
   }
 
+  const getSettingsNavItems = () => {
+    return [
+      { to: '/company-settings', label: 'Company Settings', icon: Settings },
+    ]
+  }
+
   return (
     <div className="min-h-screen grid grid-cols-[240px_1fr]">
       <aside className="border-r bg-white dark:bg-zinc-900 dark:text-zinc-100">
@@ -152,8 +159,31 @@ function Layout() {
               ))}
             </div>
           )}
+
+          {/* Settings */}
+          {getSettingsNavItems().length > 0 && (
+            <div>
+              <p className="text-xs font-semibold text-zinc-500 uppercase tracking-wide px-3 py-2">Settings</p>
+              {getSettingsNavItems().map((item) => {
+                const Icon = item.icon
+                return (
+                  <NavLink
+                    key={item.to}
+                    to={item.to}
+                    end={item.to === '/'}
+                    className={({ isActive }) =>
+                      `flex items-center gap-2 rounded-md px-3 py-2 text-sm ${isActive ? 'bg-sky-500 text-white' : 'hover:bg-sky-50 dark:hover:bg-zinc-800'}`
+                    }
+                  >
+                    {Icon && <Icon className="h-4 w-4" />}
+                    {item.label}
+                  </NavLink>
+                )
+              })}
+            </div>
+          )}
         </nav>
-        <div className="p-4 mt-auto space-y-2">
+        <div className="p-4 mt-auto space-y-2 border-t">
           <Button variant="outline" className="w-full" onClick={() => setIsDark((v) => !v)}>
             {isDark ? 'Light Mode' : 'Dark Mode'}
           </Button>
@@ -213,6 +243,7 @@ export default function App() {
           <Route path="tasks" element={<CompanyTasks />} />
           <Route path="roadmap" element={<ProductRoadmap />} />
           <Route path="company-roadmap" element={<CompanyRoadmap />} />
+          <Route path="company-settings" element={<CompanySettings />} />
           <Route path="crm" element={<CompanyCrmHub />} />
           <Route path="crm/list" element={<CompanyCrmList />} />
           <Route path="metrics" element={<UserMetrics />} />
