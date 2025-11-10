@@ -46,6 +46,18 @@ const settingsOptions = [
 export default function GFCommandCentral() {
   const { staff, staffId, company, companyId, role } = useHydratedStaff();
   
+  // Debug: Log what we actually have
+  console.log('🔍 GFCommandCentral: Staff loaded:', !!staff, 'Staff ID:', staffId);
+  console.log('🔍 GFCommandCentral: Company loaded:', !!company, 'Company ID:', companyId);
+  console.log('🔍 GFCommandCentral: Role:', role);
+  
+  if (company) {
+    console.log('🔍 GFCommandCentral: Company Name:', company.companyName);
+    console.log('🔍 GFCommandCentral: Roadmap Items:', company.roadmapItems?.length || 0);
+    console.log('🔍 GFCommandCentral: Contacts:', company.contacts?.length || 0);
+    console.log('🔍 GFCommandCentral: Tasks:', company.tasks?.length || 0);
+  }
+  
   return (
     <div className="space-y-6">
       <div>

@@ -91,6 +91,18 @@ export default function GFCompanyWelcome() {
         console.log('✅ GFCompany WELCOME: Staff ID:', staffData.id);
         console.log('✅ GFCompany WELCOME: Company ID:', company.id);
         console.log('✅ GFCompany WELCOME: Role:', staffData.role);
+        
+        // Verify localStorage was actually written
+        const storedCompany = localStorage.getItem('gfcompany_company');
+        const storedStaff = localStorage.getItem('gfcompany_staff');
+        console.log('🔍 GFCompany WELCOME: Verification - Company in localStorage:', !!storedCompany);
+        console.log('🔍 GFCompany WELCOME: Verification - Staff in localStorage:', !!storedStaff);
+        
+        if (storedCompany) {
+          const parsedCompany = JSON.parse(storedCompany);
+          console.log('🔍 GFCompany WELCOME: Stored Company ID:', parsedCompany.id);
+          console.log('🔍 GFCompany WELCOME: Stored Company Name:', parsedCompany.companyName);
+        }
 
         // All complete - route directly to command central
         console.log('✅ GFCompany: Staff fully hydrated with company - routing to command central');
@@ -99,6 +111,31 @@ export default function GFCompanyWelcome() {
         
       } catch (error) {
         console.error('❌ GFCompany WELCOME: Hydration error:', error);
+        console.error('❌ GFCompany WELCOME: Error response:', error.response?.data);
+        console.error('❌ GFCompany WELCOME: Error status:', error.response?.status);
+        console.error('❌ GFCompany WELCOME: Error message:', error.message);
+        
+        // Check if data might have been stored despite error (network error after success)
+        const storedCompany = localStorage.getItem('gfcompany_company');
+        const storedStaff = localStorage.getItem('gfcompany_staff');
+        
+        if (storedCompany && storedStaff) {
+          console.log('⚠️ GFCompany WELCOME: Error occurred BUT data exists in localStorage!');
+          console.log('⚠️ GFCompany WELCOME: Attempting to proceed with stored data...');
+          
+          try {
+            const parsedCompany = JSON.parse(storedCompany);
+            const parsedStaff = JSON.parse(storedStaff);
+            
+            if (parsedCompany.id && parsedStaff.id) {
+              console.log('✅ GFCompany WELCOME: Stored data is valid - routing to command central');
+              navigate('/command-central', { replace: true });
+              return;
+            }
+          } catch (parseError) {
+            console.error('❌ GFCompany WELCOME: Failed to parse stored data:', parseError);
+          }
+        }
         
         // If 401, user not authenticated or token expired
         if (error.response?.status === 401) {
@@ -112,6 +149,16 @@ export default function GFCompanyWelcome() {
           console.log('👤 GFCompany: Staff not found → redirecting to signup');
           navigate('/gfcompanysignup', { replace: true });
           return;
+        }
+        
+        // Network errors (CORS, 502, etc.) - check if we have cached data
+        if (!error.response || error.response.status >= 500) {
+          console.log('⚠️ GFCompany: Server error (possibly CORS/502) - checking for cached data...');
+          if (storedCompany && storedStaff) {
+            console.log('✅ GFCompany: Using cached data despite server error');
+            navigate('/command-central', { replace: true });
+            return;
+          }
         }
         
         // Other errors - redirect to signup
