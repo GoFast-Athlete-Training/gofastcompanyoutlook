@@ -19,15 +19,21 @@ export default function GFCompanyWelcome() {
           return;
         }
 
-        console.log('🚀 GFCompany WELCOME: Hydrating Staff data...');
+        console.log('🚀 GFCompany WELCOME: Hydrating Company data...');
         
-        // Call hydration endpoint (token automatically added by api interceptor)
-        const response = await gfcompanyapi.get('/api/staff/hydrate');
+        // Call company hydration endpoint (returns full company with all relations + staff)
+        const response = await gfcompanyapi.get('/api/company/hydrate');
         
-        const { success, staff: staffData } = response.data;
+        const { success, company: companyData, staff: staffData } = response.data;
 
-        if (!success || !staffData) {
+        if (!success) {
           console.error('❌ GFCompany: Hydration failed:', response.data.error || 'Invalid response');
+          navigate('/gfcompanysignup', { replace: true });
+          return;
+        }
+
+        if (!staffData) {
+          console.error('❌ GFCompany: Staff data missing from response');
           navigate('/gfcompanysignup', { replace: true });
           return;
         }
@@ -36,6 +42,7 @@ export default function GFCompanyWelcome() {
         console.log('✅ GFCompany WELCOME: Role:', staffData.role);
         console.log('✅ GFCompany WELCOME: Start Date:', staffData.startDate);
         console.log('✅ GFCompany WELCOME: Salary:', staffData.salary);
+        console.log('✅ GFCompany WELCOME: Company ID:', companyData?.id || staffData.companyId);
 
         // Store ALL staff data in localStorage (includes role, startDate, salary, etc.)
         localStorage.setItem('gfcompany_staffId', staffData.id);
@@ -46,23 +53,34 @@ export default function GFCompanyWelcome() {
 
         // Routing Logic based on what's missing
         // Company check: Does staff have a company?
-        if (!staffData.company || !staffData.companyId) {
+        if (!companyData && !staffData.companyId) {
           console.log('⚠️ GFCompany: No company found → redirecting to company settings');
           navigate('/company-settings', { replace: true });
           return;
         }
 
-        // Company exists - save to localStorage
-        const company = {
-          ...staffData.company,
-          role: staffData.role,
-        };
+        // Company exists - save FULL company data with all relations
+        if (companyData) {
+          const company = {
+            ...companyData,
+            role: staffData.role, // Include staff role in company object
+          };
 
-        localStorage.setItem('gfcompany_company', JSON.stringify(company));
-        localStorage.setItem('gfcompany_companyId', company.id);
-        localStorage.setItem('gfcompany_containerId', company.containerId);
-        localStorage.setItem('gfcompany_companyHQ', JSON.stringify(company));
-        localStorage.setItem('gfcompany_companyHQId', company.id);
+          localStorage.setItem('gfcompany_company', JSON.stringify(company));
+          localStorage.setItem('gfcompany_companyId', company.id);
+          localStorage.setItem('gfcompany_containerId', company.containerId);
+          localStorage.setItem('gfcompany_companyHQ', JSON.stringify(company));
+          localStorage.setItem('gfcompany_companyHQId', company.id);
+          
+          console.log('✅ GFCompany WELCOME: Company stored with all relations');
+          console.log('   - Roadmap Items:', company.roadmapItems?.length || 0);
+          console.log('   - Contacts:', company.contacts?.length || 0);
+          console.log('   - Tasks:', company.tasks?.length || 0);
+          console.log('   - Product Pipeline:', company.productPipelineItems?.length || 0);
+          console.log('   - Financial Spends:', company.financialSpends?.length || 0);
+          console.log('   - Financial Projections:', company.financialProjections?.length || 0);
+          console.log('   - Staff:', company.staff?.length || 0);
+        }
 
         // Store Firebase token for API calls
         const token = await firebaseUser.getIdToken();
