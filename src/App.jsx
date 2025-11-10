@@ -46,10 +46,16 @@ function Layout() {
     }
 
     // If we don't have staff data, redirect to welcome to hydrate
+    // BUT allow access to company-settings page (it can create company)
+    const currentPath = window.location.pathname
+    const isCompanySettings = currentPath.includes('/company-settings')
+    
     if (!staff || !staffId) {
-      console.log('⚠️ GFCompany Layout: No staff data → redirecting to welcome for hydration')
-      navigate('/gfcompanywelcome', { replace: true })
-      return
+      if (!isCompanySettings) {
+        console.log('⚠️ GFCompany Layout: No staff data → redirecting to welcome for hydration')
+        navigate('/gfcompanywelcome', { replace: true })
+        return
+      }
     }
 
     console.log('✅ GFCompany Layout: Staff data loaded via hook')

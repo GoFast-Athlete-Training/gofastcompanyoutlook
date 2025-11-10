@@ -44,7 +44,7 @@ export default function GFCompanyWelcome() {
         // Company check: Does staff have a company?
         if (!staffData.company || !staffData.companyId) {
           console.log('⚠️ GFCompany: No company found → redirecting to company settings');
-          navigate('/company-settings', { replace: true });
+          navigate('/command-central/company-settings', { replace: true });
           return;
         }
 
