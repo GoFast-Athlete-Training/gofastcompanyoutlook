@@ -33,12 +33,16 @@ export default function GFCompanyWelcome() {
         }
 
         console.log('✅ GFCompany WELCOME: Staff hydrated:', staffData);
+        console.log('✅ GFCompany WELCOME: Role:', staffData.role);
+        console.log('✅ GFCompany WELCOME: Start Date:', staffData.startDate);
+        console.log('✅ GFCompany WELCOME: Salary:', staffData.salary);
 
-        // Store staff data in localStorage
+        // Store ALL staff data in localStorage (includes role, startDate, salary, etc.)
         localStorage.setItem('gfcompany_staffId', staffData.id);
         localStorage.setItem('gfcompany_staff', JSON.stringify(staffData));
-        localStorage.setItem('gfcompany_role', staffData.role || '');
-        localStorage.setItem('gfcompany_firebaseId', firebaseUser.uid);
+        localStorage.setItem('gfcompany_role', staffData.role || ''); // Keep separate for quick access
+        localStorage.setItem('gfcompany_firebaseId', staffData.firebaseId || firebaseUser.uid);
+        localStorage.setItem('gfcompany_email', staffData.email || firebaseUser.email || '');
 
         // Routing Logic based on what's missing
         // Company check: Does staff have a company?
