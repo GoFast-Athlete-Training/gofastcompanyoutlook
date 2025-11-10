@@ -86,23 +86,15 @@ export default function GFCommandCentral() {
   const seedProductRoadmap = async () => {
     setSeeding(true);
     
-    // Just seed the first item to test upsert
+    // Just seed the first item - SIMPLE: title, hours, priority, status
     const item = {
       title: 'Join RunCrew',
-      itemType: 'Feature',
-      parentArchitecture: 'RunCrew',
       roadmapType: 'Product',
-      category: 'Core Feature',
-      whatItDoes: 'Join code-based invitation system - Admin creates unique join code, shares with invitees. Users enter code to join RunCrew. Supports two flows: Athlete-First (existing users) and Join Code-First (new users via signup). Creates RunCrewMembership junction table.',
-      howItHelps: 'Enables accountability through community - seamless onboarding for both existing and new users. Core mechanism for RunCrew growth and member acquisition. Allows admins to invite via shareable codes (text, email, link).',
-      fieldsData: 'joinCode (unique, uppercase normalized), athleteId, runCrewId, joinedAt timestamp, RunCrewMembership junction table',
-      howToGet: 'POST /api/runcrew/join (athlete-first, requires auth), GET /api/join/validate?code=XXX (code-first, public), POST /api/join/temp (stores join context in Redis)',
-      prerequisites: 'RunCrew must exist with unique joinCode. For athlete-first: user authenticated with Firebase token. For code-first: join context stored in Redis (5-min TTL) during signup.',
-      visual: 'List',
-      priority: 'P1',
+      priority: 'P0', // Critical path - get users on platform
       status: 'In Progress',
       hoursEstimated: 40,
-      targetDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString() // 30 days from now
+      whatItDoes: 'Users can join RunCrews via join code - core onboarding feature',
+      howItHelps: 'Critical path to get users on platform - enables RunCrew growth'
     };
 
     console.log('🌱 Seeding product roadmap item:', item.title);
