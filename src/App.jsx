@@ -35,30 +35,35 @@ function Layout() {
   }, [isDark])
 
   useEffect(() => {
-    // Always check if we have Firebase auth - if not, redirect to signin
+    // Use onAuthStateChanged to wait for Firebase auth state to be ready
+    // auth.currentUser is synchronous and might be null even if user is authenticated
     const auth = getAuth()
-    const firebaseUser = auth.currentUser
-
-    if (!firebaseUser && !firebaseId) {
-      console.log('❌ GFCompany Layout: No Firebase user → redirecting to signin')
-      navigate('/gfcompanysignin', { replace: true })
-      return
-    }
-
-    // If we don't have staff data, redirect to welcome to hydrate
-    // BUT allow access to company-settings page (it can create company)
-    const currentPath = window.location.pathname
-    const isCompanySettings = currentPath.includes('/company-settings')
-    
-    if (!staff || !staffId) {
-      if (!isCompanySettings) {
-        console.log('⚠️ GFCompany Layout: No staff data → redirecting to welcome for hydration')
-        navigate('/gfcompanywelcome', { replace: true })
+    const unsubscribe = auth.onAuthStateChanged((firebaseUser) => {
+      // If no Firebase user AND no firebaseId in localStorage, redirect to signin
+      if (!firebaseUser && !firebaseId) {
+        console.log('❌ GFCompany Layout: No Firebase user → redirecting to signin')
+        navigate('/gfcompanysignin', { replace: true })
         return
       }
-    }
 
-    console.log('✅ GFCompany Layout: Staff data loaded via hook')
+      // If we don't have staff data, redirect to welcome to hydrate
+      // BUT allow access to company-settings page (it can create company)
+      const currentPath = window.location.pathname
+      const isCompanySettings = currentPath.includes('/company-settings')
+      
+      if (!staff || !staffId) {
+        if (!isCompanySettings) {
+          console.log('⚠️ GFCompany Layout: No staff data → redirecting to welcome for hydration')
+          navigate('/gfcompanywelcome', { replace: true })
+          return
+        }
+      }
+
+      console.log('✅ GFCompany Layout: Staff data loaded via hook')
+    })
+
+    // Cleanup listener
+    return () => unsubscribe()
   }, [navigate, staff, staffId, firebaseId])
 
   const handleLogout = async () => {
