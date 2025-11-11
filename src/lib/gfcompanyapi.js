@@ -48,25 +48,14 @@ gfcompanyapi.interceptors.response.use(
   error => {
     console.error('❌ GFCompany API Error:', error.response?.status, error.response?.data || error.message);
     
-    // Handle 401 (Unauthorized) - Firebase will handle token refresh automatically
-    // Just clear CompanyStaff data and redirect (Firebase auth persists automatically)
+    // Handle 401 (Unauthorized) - token expired or invalid
+    // Following standard pattern: clear localStorage and redirect
+    // Firebase auth persistence is handled by Firebase SDK internally (IndexedDB)
     if (error.response?.status === 401) {
-      console.error('🚫 GFCompany: Unauthorized - clearing CompanyStaff data');
-      
-      // Clear ONLY CompanyStaff data (Firebase auth persists automatically)
-      const keysToRemove = [
-        'gfcompany_staffId',
-        'gfcompany_staff',
-        'gfcompany_firebaseId',
-        'gfcompany_firebaseToken',
-        'gfcompany_email',
-        'gfcompany_company',
-        'gfcompany_companyId',
-        'gfcompany_role'
-      ];
-      keysToRemove.forEach(key => localStorage.removeItem(key));
-      
-      // Redirect to signin - Firebase will handle re-auth if needed
+      console.error('🚫 GFCompany: Unauthorized - redirecting to signin');
+      // Clear localStorage (Firebase auth persists in IndexedDB automatically)
+      localStorage.clear();
+      // Redirect to signin
       window.location.href = '/gfcompanysignin';
     }
     
