@@ -19,7 +19,7 @@ export default function ProductRoadmap() {
   const [viewMode, setViewMode] = useState('List')
   const [filterStatus, setFilterStatus] = useState('All')
   const [filterPriority, setFilterPriority] = useState('All')
-  const [filterFeatureType, setFilterFeatureType] = useState('All')
+  const [filterCategory, setFilterCategory] = useState('All')
   const [sortBy, setSortBy] = useState('priority')
 
   // Load items from localStorage FIRST (local-first pattern)
@@ -38,8 +38,20 @@ export default function ProductRoadmap() {
         const mappedItems = items.map(item => ({
           ...item,
           featureName: item.title || item.featureName,
-          featureType: item.roadmapType || item.featureType,
-          hoursEst: item.hoursEstimated || item.hoursEst
+          primaryRepo: item.primaryRepo || item.parentArchitecture || '',
+          quickModelScaffolding: item.quickModelScaffolding || item.fieldsData || '',
+          relationalMapping: item.relationalMapping || '',
+          apiIntegration: item.apiIntegration || item.howToGet || '',
+          hoursEst: item.hoursEstimated || item.hoursEst,
+          // Map priority from old P0/P1/P2 to new values
+          priority: item.priority === 'P0' ? 'Critical Path' :
+                    item.priority === 'P1' ? 'Enhanced User Feature' :
+                    item.priority === 'P2' ? 'Future Release' :
+                    item.priority || 'Enhanced User Feature',
+          // Map itemType
+          itemType: item.itemType === 'Feature' ? 'Dev Work' :
+                    item.itemType === 'Milestone' ? 'Product Milestone' :
+                    item.itemType || 'Dev Work'
         }))
         setRoadmapItems(mappedItems)
       } else {
@@ -77,8 +89,20 @@ export default function ProductRoadmap() {
         const mappedItems = items.map(item => ({
           ...item,
           featureName: item.title,
-          featureType: item.roadmapType,
-          hoursEst: item.hoursEstimated
+          primaryRepo: item.primaryRepo || item.parentArchitecture || '',
+          quickModelScaffolding: item.quickModelScaffolding || item.fieldsData || '',
+          relationalMapping: item.relationalMapping || '',
+          apiIntegration: item.apiIntegration || item.howToGet || '',
+          hoursEst: item.hoursEstimated,
+          // Map priority from old P0/P1/P2 to new values
+          priority: item.priority === 'P0' ? 'Critical Path' :
+                    item.priority === 'P1' ? 'Enhanced User Feature' :
+                    item.priority === 'P2' ? 'Future Release' :
+                    item.priority || 'Enhanced User Feature',
+          // Map itemType
+          itemType: item.itemType === 'Feature' ? 'Dev Work' :
+                    item.itemType === 'Milestone' ? 'Product Milestone' :
+                    item.itemType || 'Dev Work'
         }))
         setRoadmapItems(mappedItems)
       } else {
@@ -97,21 +121,40 @@ export default function ProductRoadmap() {
 
   // Map frontend fields to backend fields
   const mapItemToBackend = (item) => {
+    // Map priority from new values to old for backward compatibility (or keep new if backend supports)
+    const mapPriorityToBackend = (priority) => {
+      if (priority === 'Critical Path') return 'Critical Path'
+      if (priority === 'Enhanced User Feature') return 'Enhanced User Feature'
+      if (priority === 'Future Release') return 'Future Release'
+      if (priority === 'Revenue Builder') return 'Revenue Builder'
+      // Fallback for old P0/P1/P2
+      return priority || 'Enhanced User Feature'
+    }
+
+    // Map itemType from new values to old for backward compatibility
+    const mapItemTypeToBackend = (itemType) => {
+      if (itemType === 'Dev Work') return 'Dev Work'
+      if (itemType === 'Product Milestone') return 'Product Milestone'
+      // Fallback for old Feature/Milestone
+      return itemType === 'Feature' ? 'Dev Work' :
+             itemType === 'Milestone' ? 'Product Milestone' :
+             itemType || 'Dev Work'
+    }
+
     return {
       title: item.featureName || item.title,
-      itemType: item.itemType || 'Feature',
-      parentArchitecture: item.parentArchitecture || null,
-      roadmapType: item.featureType || item.roadmapType || 'Product',
+      itemType: mapItemTypeToBackend(item.itemType),
+      primaryRepo: item.primaryRepo || item.parentArchitecture || null,
       category: item.category || 'Core Feature',
       whatItDoes: item.whatItDoes || null,
       howItHelps: item.howItHelps || null,
-      fieldsData: item.fieldsData || null,
-      howToGet: item.howToGet || null,
+      quickModelScaffolding: item.quickModelScaffolding || item.fieldsData || null,
+      relationalMapping: item.relationalMapping || null,
+      apiIntegration: item.apiIntegration || item.howToGet || null,
       prerequisites: item.prerequisites || null,
-      visual: item.visual || 'List',
       hoursEstimated: item.hoursEst ? parseInt(item.hoursEst) : null,
       targetDate: item.targetDate || null,
-      priority: item.priority || 'P1',
+      priority: mapPriorityToBackend(item.priority),
       status: item.status || 'Not Started'
     }
   }
@@ -162,9 +205,25 @@ export default function ProductRoadmap() {
         if (response.data.success) {
           console.log('✅ PRODUCT ROADMAP: Item updated')
           // Update localStorage immediately
+          const backendItem = response.data.roadmapItem
           const updatedItems = roadmapItems.map(i => 
             i.id === editingItem.id 
-              ? { ...response.data.roadmapItem, featureName: response.data.roadmapItem.title, featureType: response.data.roadmapItem.roadmapType, hoursEst: response.data.roadmapItem.hoursEstimated }
+              ? {
+                  ...backendItem,
+                  featureName: backendItem.title,
+                  primaryRepo: backendItem.primaryRepo || backendItem.parentArchitecture || '',
+                  quickModelScaffolding: backendItem.quickModelScaffolding || backendItem.fieldsData || '',
+                  relationalMapping: backendItem.relationalMapping || '',
+                  apiIntegration: backendItem.apiIntegration || backendItem.howToGet || '',
+                  hoursEst: backendItem.hoursEstimated,
+                  priority: backendItem.priority === 'P0' ? 'Critical Path' :
+                            backendItem.priority === 'P1' ? 'Enhanced User Feature' :
+                            backendItem.priority === 'P2' ? 'Future Release' :
+                            backendItem.priority || 'Enhanced User Feature',
+                  itemType: backendItem.itemType === 'Feature' ? 'Dev Work' :
+                            backendItem.itemType === 'Milestone' ? 'Product Milestone' :
+                            backendItem.itemType || 'Dev Work'
+                }
               : i
           )
           saveRoadmapItemsToStorage(updatedItems)
@@ -182,11 +241,22 @@ export default function ProductRoadmap() {
         if (response.data.success) {
           console.log('✅ PRODUCT ROADMAP: Item created')
           // Update localStorage immediately
+          const backendItem = response.data.roadmapItem
           const newItem = {
-            ...response.data.roadmapItem,
-            featureName: response.data.roadmapItem.title,
-            featureType: response.data.roadmapItem.roadmapType,
-            hoursEst: response.data.roadmapItem.hoursEstimated
+            ...backendItem,
+            featureName: backendItem.title,
+            primaryRepo: backendItem.primaryRepo || backendItem.parentArchitecture || '',
+            quickModelScaffolding: backendItem.quickModelScaffolding || backendItem.fieldsData || '',
+            relationalMapping: backendItem.relationalMapping || '',
+            apiIntegration: backendItem.apiIntegration || backendItem.howToGet || '',
+            hoursEst: backendItem.hoursEstimated,
+            priority: backendItem.priority === 'P0' ? 'Critical Path' :
+                      backendItem.priority === 'P1' ? 'Enhanced User Feature' :
+                      backendItem.priority === 'P2' ? 'Future Release' :
+                      backendItem.priority || 'Enhanced User Feature',
+            itemType: backendItem.itemType === 'Feature' ? 'Dev Work' :
+                      backendItem.itemType === 'Milestone' ? 'Product Milestone' :
+                      backendItem.itemType || 'Dev Work'
           }
           const updatedItems = [...roadmapItems, newItem]
           saveRoadmapItemsToStorage(updatedItems)
@@ -221,9 +291,10 @@ export default function ProductRoadmap() {
       // Prefill with Join RunCrew data
       setEditingItem({
         featureName: 'Join RunCrew',
-        roadmapType: 'Product',
-        featureType: 'Product',
-        priority: 'P0',
+        itemType: 'Dev Work',
+        primaryRepo: 'mvp1',
+        category: 'Core Feature',
+        priority: 'Critical Path',
         status: 'In Progress',
         hoursEst: 40,
         whatItDoes: 'Users can join RunCrews via join code - core onboarding feature',
@@ -239,14 +310,19 @@ export default function ProductRoadmap() {
     .filter(item => {
       if (filterStatus !== 'All' && item.status !== filterStatus) return false
       if (filterPriority !== 'All' && item.priority !== filterPriority) return false
-      if (filterFeatureType !== 'All' && item.featureType !== filterFeatureType) return false
+      if (filterCategory !== 'All' && item.category !== filterCategory) return false
       return true
     })
     .sort((a, b) => {
       switch (sortBy) {
         case 'priority':
-          const priorityOrder = { 'P0': 0, 'P1': 1, 'P2': 2 }
-          return priorityOrder[a.priority] - priorityOrder[b.priority]
+          const priorityOrder = { 
+            'Critical Path': 0, 
+            'Enhanced User Feature': 1, 
+            'Future Release': 2,
+            'Revenue Builder': 3
+          }
+          return (priorityOrder[a.priority] ?? 99) - (priorityOrder[b.priority] ?? 99)
         case 'targetDate':
           return (a.targetDate || '').localeCompare(b.targetDate || '')
         case 'status':
@@ -272,12 +348,14 @@ export default function ProductRoadmap() {
 
   const getPriorityColor = (priority) => {
     switch (priority) {
-      case 'P0':
+      case 'Critical Path':
         return 'bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300'
-      case 'P1':
+      case 'Enhanced User Feature':
         return 'bg-orange-100 text-orange-700 dark:bg-orange-900 dark:text-orange-300'
-      case 'P2':
+      case 'Future Release':
         return 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300'
+      case 'Revenue Builder':
+        return 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300'
       default:
         return 'bg-zinc-100 text-zinc-700'
     }
@@ -312,11 +390,11 @@ export default function ProductRoadmap() {
                       {item.priority}
                     </span>
                     <span className="px-2 py-1 rounded text-xs bg-zinc-100 dark:bg-zinc-800">
-                      {item.featureType}
+                      {item.category}
                     </span>
-                    {item.itemType === 'Milestone' && (
+                    {item.itemType === 'Product Milestone' && (
                       <span className="px-2 py-1 rounded text-xs bg-purple-100 dark:bg-purple-900 text-purple-700 dark:text-purple-300">
-                        Milestone
+                        Product Milestone
                       </span>
                     )}
                   </div>
@@ -324,9 +402,9 @@ export default function ProductRoadmap() {
                     <div>
                       <span className="font-medium">Category:</span> {item.category}
                     </div>
-                    {item.parentArchitecture && (
+                    {item.primaryRepo && (
                       <div>
-                        <span className="font-medium">Parent:</span> {item.parentArchitecture}
+                        <span className="font-medium">Repo:</span> {item.primaryRepo}
                       </div>
                     )}
                     {item.hoursEst && (
@@ -429,7 +507,7 @@ export default function ProductRoadmap() {
                         {item.priority}
                       </span>
                       <span className="inline-block px-2 py-0.5 rounded text-xs bg-zinc-100 dark:bg-zinc-800 ml-1">
-                        {item.featureType}
+                        {item.category}
                       </span>
                     </div>
                     {item.whatItDoes && (
@@ -583,22 +661,22 @@ export default function ProductRoadmap() {
               className="px-3 py-1.5 border rounded-md text-sm"
             >
               <option value="All">All Priorities</option>
-              <option value="P0">P0 - Must have</option>
-              <option value="P1">P1 - Should have</option>
-              <option value="P2">P2 - Nice to have</option>
+              <option value="Critical Path">Critical Path</option>
+              <option value="Enhanced User Feature">Enhanced User Feature</option>
+              <option value="Future Release">Future Release</option>
+              <option value="Revenue Builder">Revenue Builder</option>
             </select>
 
             <select
-              value={filterFeatureType}
-              onChange={(e) => setFilterFeatureType(e.target.value)}
+              value={filterCategory}
+              onChange={(e) => setFilterCategory(e.target.value)}
               className="px-3 py-1.5 border rounded-md text-sm"
             >
-              <option value="All">All Types</option>
-              <option value="Product">Product</option>
-              <option value="GTM">GTM</option>
-              <option value="Operations">Operations</option>
-              <option value="Infrastructure">Infrastructure</option>
-              <option value="UX/Design">UX/Design</option>
+              <option value="All">All Categories</option>
+              <option value="Core Feature">Core Feature</option>
+              <option value="Frontend Demo">Frontend Demo</option>
+              <option value="API Integration">API Integration</option>
+              <option value="Backend Scaffolding">Backend Scaffolding</option>
             </select>
 
             <div className="ml-auto flex items-center gap-2">

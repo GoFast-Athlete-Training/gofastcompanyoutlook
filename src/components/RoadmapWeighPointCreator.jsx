@@ -5,19 +5,18 @@ import { X } from 'lucide-react'
 
 export default function RoadmapWeighPointCreator({ isOpen, onClose, onSubmit, editingItem }) {
   const defaultFormData = {
-    itemType: 'Feature', // Feature or Milestone
+    itemType: 'Dev Work', // Dev Work or Product Milestone
     featureName: '',
-    parentArchitecture: '',
-    featureType: 'Product',
+    primaryRepo: '',
     category: 'Core Feature',
     whatItDoes: '',
     howItHelps: '',
-    fieldsData: '',
-    howToGet: '',
+    quickModelScaffolding: '',
+    relationalMapping: '',
+    apiIntegration: '',
     prerequisites: '',
-    visual: 'List', // Default to List
     hoursEst: '',
-    priority: 'P1',
+    priority: 'Enhanced User Feature',
     targetDate: '',
     status: 'Not Started'
   }
@@ -27,11 +26,27 @@ export default function RoadmapWeighPointCreator({ isOpen, onClose, onSubmit, ed
   // Populate form when editing or when modal opens with prefilled data
   useEffect(() => {
     if (editingItem) {
-      // Merge with defaultFormData to ensure all fields are set
-      setFormData({
+      // Map old field names to new ones for backward compatibility
+      const mappedItem = {
         ...defaultFormData,
-        ...editingItem
-      })
+        ...editingItem,
+        // Map old fields to new ones
+        primaryRepo: editingItem.primaryRepo || editingItem.parentArchitecture || '',
+        quickModelScaffolding: editingItem.quickModelScaffolding || editingItem.fieldsData || '',
+        apiIntegration: editingItem.apiIntegration || editingItem.howToGet || '',
+        // Keep new fields as-is
+        relationalMapping: editingItem.relationalMapping || '',
+        // Map priority from old P0/P1/P2 to new values
+        priority: editingItem.priority === 'P0' ? 'Critical Path' :
+                  editingItem.priority === 'P1' ? 'Enhanced User Feature' :
+                  editingItem.priority === 'P2' ? 'Future Release' :
+                  editingItem.priority || 'Enhanced User Feature',
+        // Map itemType
+        itemType: editingItem.itemType === 'Feature' ? 'Dev Work' :
+                  editingItem.itemType === 'Milestone' ? 'Product Milestone' :
+                  editingItem.itemType || 'Dev Work'
+      }
+      setFormData(mappedItem)
     } else {
       setFormData(defaultFormData)
     }
@@ -78,13 +93,13 @@ export default function RoadmapWeighPointCreator({ isOpen, onClose, onSubmit, ed
                 onChange={handleChange}
                 className="w-full px-3 py-2 border rounded-md"
               >
-                <option value="Feature">Feature</option>
-                <option value="Milestone">Milestone</option>
+                <option value="Dev Work">Dev Work</option>
+                <option value="Product Milestone">Product Milestone</option>
               </select>
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-1">{formData.itemType === 'Milestone' ? 'Milestone Name' : 'Feature Name'}</label>
+              <label className="block text-sm font-medium mb-1">{formData.itemType === 'Product Milestone' ? 'Milestone Name' : 'Feature Name'}</label>
               <input
                 type="text"
                 name="featureName"
@@ -92,35 +107,20 @@ export default function RoadmapWeighPointCreator({ isOpen, onClose, onSubmit, ed
                 onChange={handleChange}
                 required
                 className="w-full px-3 py-2 border rounded-md"
+                placeholder={formData.itemType === 'Product Milestone' ? 'e.g., Get on GooglePlay' : 'e.g., Join RunCrew'}
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-1">Parent Architecture</label>
+              <label className="block text-sm font-medium mb-1">Primary Repo</label>
               <input
                 type="text"
-                name="parentArchitecture"
-                value={formData.parentArchitecture}
+                name="primaryRepo"
+                value={formData.primaryRepo}
                 onChange={handleChange}
                 className="w-full px-3 py-2 border rounded-md"
-                placeholder="e.g., RunCrew, Profile, RunClub, etc."
+                placeholder="e.g., mvp1, eventslanding, companystack"
               />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium mb-1">Feature Type</label>
-              <select
-                name="featureType"
-                value={formData.featureType}
-                onChange={handleChange}
-                className="w-full px-3 py-2 border rounded-md"
-              >
-                <option value="Product">Product</option>
-                <option value="GTM">GTM</option>
-                <option value="Operations">Operations</option>
-                <option value="Infrastructure">Infrastructure</option>
-                <option value="UX/Design">UX/Design</option>
-              </select>
             </div>
 
             <div>
@@ -147,6 +147,7 @@ export default function RoadmapWeighPointCreator({ isOpen, onClose, onSubmit, ed
                 required
                 rows="2"
                 className="w-full px-3 py-2 border rounded-md"
+                placeholder="What does this feature do for users?"
               />
             </div>
 
@@ -163,25 +164,38 @@ export default function RoadmapWeighPointCreator({ isOpen, onClose, onSubmit, ed
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-1">Fields/Data Needed</label>
+              <label className="block text-sm font-medium mb-1">Quick Model Scaffolding</label>
               <textarea
-                name="fieldsData"
-                value={formData.fieldsData}
+                name="quickModelScaffolding"
+                value={formData.quickModelScaffolding}
                 onChange={handleChange}
                 rows="2"
                 className="w-full px-3 py-2 border rounded-md"
+                placeholder="How does this fit into the architecture? What models/data structures are needed?"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-1">How to Get (APIs, routes, data sources)</label>
+              <label className="block text-sm font-medium mb-1">Relational Mapping</label>
               <textarea
-                name="howToGet"
-                value={formData.howToGet}
+                name="relationalMapping"
+                value={formData.relationalMapping}
                 onChange={handleChange}
                 rows="2"
                 className="w-full px-3 py-2 border rounded-md"
-                placeholder="e.g., /api/feature/list, cloud storage API, etc."
+                placeholder="Does this bolt on to athleteId? What's the relational mapping? (e.g., Athlete -> RunCrewMembership -> RunCrew)"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium mb-1">API Integration</label>
+              <textarea
+                name="apiIntegration"
+                value={formData.apiIntegration}
+                onChange={handleChange}
+                rows="2"
+                className="w-full px-3 py-2 border rounded-md"
+                placeholder="API-specific integration (e.g., 'hit garmin backend with a token')"
               />
             </div>
 
@@ -193,22 +207,8 @@ export default function RoadmapWeighPointCreator({ isOpen, onClose, onSubmit, ed
                 onChange={handleChange}
                 rows="2"
                 className="w-full px-3 py-2 border rounded-md"
-                placeholder="e.g., Research cloud storage, create account, get API key, setup auth"
+                placeholder="Setup, research, account creation, auth - can include links (e.g., 'apply for token: https://...')"
               />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium mb-1">Visual Presentation</label>
-              <select
-                name="visual"
-                value={formData.visual}
-                onChange={handleChange}
-                className="w-full px-3 py-2 border rounded-md"
-              >
-                <option value="List">List</option>
-                <option value="Timeline">Timeline</option>
-                <option value="Kanban">Kanban</option>
-              </select>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
@@ -245,9 +245,10 @@ export default function RoadmapWeighPointCreator({ isOpen, onClose, onSubmit, ed
                   onChange={handleChange}
                   className="w-full px-3 py-2 border rounded-md"
                 >
-                  <option value="P0">P0 - Must have</option>
-                  <option value="P1">P1 - Should have</option>
-                  <option value="P2">P2 - Nice to have</option>
+                  <option value="Critical Path">Critical Path</option>
+                  <option value="Enhanced User Feature">Enhanced User Feature</option>
+                  <option value="Future Release">Future Release</option>
+                  <option value="Revenue Builder">Revenue Builder</option>
                 </select>
               </div>
 
@@ -278,4 +279,3 @@ export default function RoadmapWeighPointCreator({ isOpen, onClose, onSubmit, ed
     </div>
   )
 }
-
