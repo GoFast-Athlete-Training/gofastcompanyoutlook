@@ -2,56 +2,96 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
 import { Button } from '../components/ui/button'
-import { Plus, Map, Edit2, Trash2, Filter, Calendar, Grid, List as ListIcon, CheckCircle2, Circle, Clock } from 'lucide-react'
+import { Plus, Map, Edit2, Trash2, Filter, Calendar, Grid, List as ListIcon, CheckCircle2, Circle, Clock, RefreshCw } from 'lucide-react'
 import RoadmapWeighPointCreator from '../components/RoadmapWeighPointCreator'
 import gfcompanyapi from '../lib/gfcompanyapi'
+
+const ROADMAP_STORAGE_KEY = 'gfcompany_productRoadmap'
 
 export default function ProductRoadmap() {
   const navigate = useNavigate()
   const [modalOpen, setModalOpen] = useState(false)
   const [editingItem, setEditingItem] = useState(null)
   const [roadmapItems, setRoadmapItems] = useState([])
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(false)
   const [saving, setSaving] = useState(false)
+  const [syncing, setSyncing] = useState(false)
   const [viewMode, setViewMode] = useState('List')
   const [filterStatus, setFilterStatus] = useState('All')
   const [filterPriority, setFilterPriority] = useState('All')
   const [filterFeatureType, setFilterFeatureType] = useState('All')
   const [sortBy, setSortBy] = useState('priority')
 
-  // Load items from backend on mount
+  // Load items from localStorage FIRST (local-first pattern)
   useEffect(() => {
-    loadRoadmapItems()
+    loadRoadmapItemsFromStorage()
   }, [])
 
-  const loadRoadmapItems = async () => {
-      try {
-      setLoading(true)
-      console.log('🚀 PRODUCT ROADMAP: Loading roadmap items...')
-
-      const response = await gfcompanyapi.get('/api/company/roadmap')
-
-      if (response.data.success) {
-        console.log('✅ PRODUCT ROADMAP: Loaded', response.data.count, 'items')
+  // Load from localStorage (instant render)
+  const loadRoadmapItemsFromStorage = () => {
+    try {
+      const stored = localStorage.getItem(ROADMAP_STORAGE_KEY)
+      if (stored) {
+        const items = JSON.parse(stored)
+        console.log('✅ PRODUCT ROADMAP: Loaded from localStorage', items.length, 'items')
         // Map backend fields to frontend fields
-        const mappedItems = (response.data.roadmapItems || []).map(item => ({
+        const mappedItems = items.map(item => ({
           ...item,
-          featureName: item.title, // Map title to featureName for frontend
-          featureType: item.roadmapType, // Map roadmapType to featureType
-          hoursEst: item.hoursEstimated // Map hoursEstimated to hoursEst
+          featureName: item.title || item.featureName,
+          featureType: item.roadmapType || item.featureType,
+          hoursEst: item.hoursEstimated || item.hoursEst
         }))
         setRoadmapItems(mappedItems)
       } else {
-        console.error('❌ PRODUCT ROADMAP: Failed to load items:', response.data.error)
+        console.log('📭 PRODUCT ROADMAP: No localStorage data - will sync on refresh')
       }
     } catch (error) {
-      console.error('❌ PRODUCT ROADMAP: Error loading items:', error)
-      if (error.response?.status === 404 && error.response?.data?.message?.includes('company')) {
-        navigate('/company-settings')
-        return
+      console.error('❌ PRODUCT ROADMAP: Error loading from localStorage:', error)
     }
+  }
+
+  // Save to localStorage
+  const saveRoadmapItemsToStorage = (items) => {
+    try {
+      localStorage.setItem(ROADMAP_STORAGE_KEY, JSON.stringify(items))
+      console.log('💾 PRODUCT ROADMAP: Saved to localStorage', items.length, 'items')
+    } catch (error) {
+      console.error('❌ PRODUCT ROADMAP: Error saving to localStorage:', error)
+    }
+  }
+
+  // Sync from backend (explicit refresh)
+  const syncRoadmapItemsFromBackend = async () => {
+    try {
+      setSyncing(true)
+      console.log('🔄 PRODUCT ROADMAP: Syncing from backend...')
+
+      const response = await gfcompanyapi.get('/api/company/roadmap?roadmapType=Product')
+
+      if (response.data.success) {
+        console.log('✅ PRODUCT ROADMAP: Synced', response.data.count, 'items from backend')
+        const items = response.data.roadmapItems || []
+        // Save to localStorage
+        saveRoadmapItemsToStorage(items)
+        // Map backend fields to frontend fields
+        const mappedItems = items.map(item => ({
+          ...item,
+          featureName: item.title,
+          featureType: item.roadmapType,
+          hoursEst: item.hoursEstimated
+        }))
+        setRoadmapItems(mappedItems)
+      } else {
+        console.error('❌ PRODUCT ROADMAP: Failed to sync:', response.data.error)
+      }
+    } catch (error) {
+      console.error('❌ PRODUCT ROADMAP: Error syncing:', error)
+      if (error.response?.status === 404 && error.response?.data?.message?.includes('company')) {
+        navigate('/command-central/company-settings')
+        return
+      }
     } finally {
-      setLoading(false)
+      setSyncing(false)
     }
   }
 
@@ -87,12 +127,16 @@ export default function ProductRoadmap() {
     }
 
     try {
+      setSaving(true)
       console.log('🚀 PRODUCT ROADMAP: Deleting item:', id)
       const response = await gfcompanyapi.delete(`/api/company/roadmap/${id}`)
 
       if (response.data.success) {
         console.log('✅ PRODUCT ROADMAP: Item deleted')
-        await loadRoadmapItems() // Reload items
+        // Update localStorage immediately
+        const updatedItems = roadmapItems.filter(item => item.id !== id)
+        saveRoadmapItemsToStorage(updatedItems)
+        setRoadmapItems(updatedItems)
       } else {
         console.error('❌ PRODUCT ROADMAP: Failed to delete item:', response.data.error)
         alert('Failed to delete item: ' + (response.data.message || response.data.error))
@@ -100,6 +144,8 @@ export default function ProductRoadmap() {
     } catch (error) {
       console.error('❌ PRODUCT ROADMAP: Error deleting item:', error)
       alert('Error deleting item: ' + (error.response?.data?.message || error.message))
+    } finally {
+      setSaving(false)
     }
   }
 
@@ -108,14 +154,21 @@ export default function ProductRoadmap() {
     try {
       const backendData = mapItemToBackend(item)
 
-    if (editingItem) {
+      if (editingItem) {
         // Update existing item
         console.log('🚀 PRODUCT ROADMAP: Updating item:', editingItem.id)
         const response = await gfcompanyapi.put(`/api/company/roadmap/${editingItem.id}`, backendData)
 
         if (response.data.success) {
           console.log('✅ PRODUCT ROADMAP: Item updated')
-          await loadRoadmapItems() // Reload items
+          // Update localStorage immediately
+          const updatedItems = roadmapItems.map(i => 
+            i.id === editingItem.id 
+              ? { ...response.data.roadmapItem, featureName: response.data.roadmapItem.title, featureType: response.data.roadmapItem.roadmapType, hoursEst: response.data.roadmapItem.hoursEstimated }
+              : i
+          )
+          saveRoadmapItemsToStorage(updatedItems)
+          setRoadmapItems(updatedItems)
         } else {
           console.error('❌ PRODUCT ROADMAP: Failed to update item:', response.data.error)
           alert('Failed to update item: ' + (response.data.message || response.data.error))
@@ -128,16 +181,25 @@ export default function ProductRoadmap() {
 
         if (response.data.success) {
           console.log('✅ PRODUCT ROADMAP: Item created')
-          await loadRoadmapItems() // Reload items
-    } else {
+          // Update localStorage immediately
+          const newItem = {
+            ...response.data.roadmapItem,
+            featureName: response.data.roadmapItem.title,
+            featureType: response.data.roadmapItem.roadmapType,
+            hoursEst: response.data.roadmapItem.hoursEstimated
+          }
+          const updatedItems = [...roadmapItems, newItem]
+          saveRoadmapItemsToStorage(updatedItems)
+          setRoadmapItems(updatedItems)
+        } else {
           console.error('❌ PRODUCT ROADMAP: Failed to create item:', response.data.error)
           alert('Failed to create item: ' + (response.data.message || response.data.error))
           return
         }
-    }
+      }
 
-    setModalOpen(false)
-    setEditingItem(null)
+      setModalOpen(false)
+      setEditingItem(null)
     } catch (error) {
       console.error('❌ PRODUCT ROADMAP: Error saving item:', error)
       alert('Error saving item: ' + (error.response?.data?.message || error.message))
@@ -171,19 +233,6 @@ export default function ProductRoadmap() {
     setModalOpen(true)
   }
 
-  if (loading) {
-    return (
-      <div className="space-y-6">
-        <div>
-          <h1 className="text-3xl font-bold">Product Roadmap</h1>
-          <p className="text-zinc-600 dark:text-zinc-400 mt-1">Strategic product roadmap items</p>
-        </div>
-        <div className="flex items-center justify-center py-12">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-4 border-sky-500"></div>
-        </div>
-      </div>
-    )
-  }
 
   // Filter and sort items
   const filteredItems = roadmapItems
@@ -492,10 +541,20 @@ export default function ProductRoadmap() {
             {roadmapItems.length} {roadmapItems.length === 1 ? 'item' : 'items'} total
           </p>
         </div>
-        <Button onClick={handleOpenModal} disabled={saving}>
-          <Plus className="h-4 w-4 mr-2" />
-          Add Roadmap Item
-        </Button>
+        <div className="flex gap-2">
+          <Button 
+            variant="outline" 
+            onClick={syncRoadmapItemsFromBackend} 
+            disabled={syncing || saving}
+          >
+            <RefreshCw className={`h-4 w-4 mr-2 ${syncing ? 'animate-spin' : ''}`} />
+            {syncing ? 'Syncing...' : 'Sync'}
+          </Button>
+          <Button onClick={handleOpenModal} disabled={saving}>
+            <Plus className="h-4 w-4 mr-2" />
+            Add Roadmap Item
+          </Button>
+        </div>
       </div>
 
       {/* Filters and Controls */}
