@@ -187,8 +187,7 @@ export default function RoadmapWeighPointCreator({ isOpen, onClose, onSubmit, ed
               
               <div>
                 <label className="block text-sm font-medium mb-1">
-                  Model Scaffolding
-                  <span className="text-xs text-zinc-500 ml-2 font-normal">(Quick architecture notes)</span>
+                  Data Model Structure
                 </label>
                 <textarea
                   name="quickModelScaffolding"
@@ -198,13 +197,12 @@ export default function RoadmapWeighPointCreator({ isOpen, onClose, onSubmit, ed
                   className="w-full px-3 py-2 border rounded-md font-mono text-sm"
                   placeholder="RunCrewMembership (junction table)&#10;  - athleteId (FK)&#10;  - runCrewId (FK)&#10;  - joinedAt (DateTime)"
                 />
-                <p className="text-xs text-zinc-500 mt-1">What models/tables/data structures are needed?</p>
+                <p className="text-xs text-zinc-500 mt-1">What models, tables, or data structures are needed for this feature?</p>
               </div>
 
               <div>
                 <label className="block text-sm font-medium mb-1">
-                  Relational Mapping
-                  <span className="text-xs text-zinc-500 ml-2 font-normal">(How does this connect?)</span>
+                  Database Relationships
                 </label>
                 <textarea
                   name="relationalMapping"
@@ -216,7 +214,7 @@ export default function RoadmapWeighPointCreator({ isOpen, onClose, onSubmit, ed
                 />
                 <div className="mt-1 p-2 bg-blue-50 dark:bg-blue-900/20 rounded text-xs text-blue-700 dark:text-blue-300 flex items-start gap-2">
                   <Info className="h-3 w-3 mt-0.5 flex-shrink-0" />
-                  <span>Does this bolt on to athleteId? What's the relationship chain?</span>
+                  <span>How does this connect to the existing data model? What's the relationship chain?</span>
                 </div>
               </div>
             </div>
